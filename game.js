@@ -360,14 +360,22 @@ function updateDashboard() {
     if (gameState.contracts.length === 0) {
         contractsList.innerHTML = '<p style="color: #888;">No active contracts. Click refresh to get new ones.</p>';
     } else {
-        contractsList.innerHTML = gameState.contracts.map((contract, idx) => `
-            <div class="contract-item">
-                <h4>${contract.title}</h4>
-                <div class="requirement">${contract.description}</div>
-                <div class="reward">Reward: ${formatMoney(contract.reward)} + ${contract.reputation} Rep</div>
-                <button class="btn btn-primary" onclick="acceptContract(${idx})">ACCEPT</button>
-            </div>
-        `).join('');
+        const contractMultiplier = getReputationMultiplier('contract');
+        contractsList.innerHTML = gameState.contracts.map((contract, idx) => {
+            const actualReward = Math.floor(contract.reward * contractMultiplier);
+            const rewardDisplay = actualReward > contract.reward
+                ? `${formatMoney(actualReward)} <span style="color: #6bbc6b;">(+${Math.round((contractMultiplier - 1) * 100)}% bonus!)</span>`
+                : formatMoney(contract.reward);
+
+            return `
+                <div class="contract-item">
+                    <h4>${contract.title}</h4>
+                    <div class="requirement">${contract.description}</div>
+                    <div class="reward">Reward: ${rewardDisplay} + ${contract.rep} Rep</div>
+                    <button class="btn btn-primary" onclick="acceptContract(${idx})">ACCEPT</button>
+                </div>
+            `;
+        }).join('');
     }
 
     // Active missions
@@ -437,12 +445,15 @@ function updateResearchTree() {
             if (unlocked) cssClass += ' unlocked';
             else if (available) cssClass += ' available';
 
+            const actualCost = Math.floor(item.cost * getReputationMultiplier('research'));
+            const costDisplay = actualCost < item.cost ? `${formatMoney(actualCost)} <span style="text-decoration: line-through; color: #666;">${formatMoney(item.cost)}</span>` : formatMoney(item.cost);
+
             html += `
                 <div class="${cssClass}" onclick="${available ? `confirmResearch('${item.key}')` : ''}">
                     <h4>${item.name}</h4>
                     <p style="color: #888; font-size: 12px; margin: 5px 0;">${item.description}</p>
                     ${item.benefit ? `<p style="color: #6bbc6b; font-size: 11px; margin: 8px 0; white-space: pre-line;">${item.benefit}</p>` : ''}
-                    <div class="cost">Cost: ${formatMoney(item.cost)}</div>
+                    <div class="cost">Cost: ${costDisplay}</div>
                     <div class="status">
                         ${unlocked ? '✓ UNLOCKED' : locked ? '🔒 LOCKED' : '→ CLICK TO RESEARCH'}
                     </div>
@@ -456,6 +467,10 @@ function updateResearchTree() {
 
 function updateAstronauts() {
     const roster = document.getElementById('astronaut-roster');
+
+    // Update hire button cost
+    const hireCost = Math.floor(50000 * getReputationMultiplier('astronaut'));
+    document.getElementById('hire-astronaut').textContent = `HIRE ASTRONAUT (${formatMoney(hireCost)})`;
 
     if (gameState.astronauts.length === 0) {
         roster.innerHTML = '<p style="color: #888;">No astronauts hired yet. Click the button above to hire one!</p>';
@@ -649,8 +664,10 @@ function canResearch(researchKey) {
 
 function confirmResearch(researchKey) {
     const research = RESEARCH_TREE[researchKey];
+    const cost = Math.floor(research.cost * getReputationMultiplier('research'));
+    const discount = cost < research.cost ? ` (${Math.round((1 - getReputationMultiplier('research')) * 100)}% discount!)` : '';
 
-    if (confirm(`Research ${research.name} for ${formatMoney(research.cost)}?\n\nThis will unlock:\n${research.benefit || research.description}`)) {
+    if (confirm(`Research ${research.name} for ${formatMoney(cost)}${discount}?\n\nThis will unlock:\n${research.benefit || research.description}`)) {
         purchaseResearch(researchKey);
     }
 }
@@ -663,12 +680,14 @@ function purchaseResearch(researchKey) {
         return;
     }
 
-    if (gameState.budget < research.cost) {
+    const cost = Math.floor(research.cost * getReputationMultiplier('research'));
+
+    if (gameState.budget < cost) {
         showNotification('Insufficient funds', 'error');
         return;
     }
 
-    gameState.budget -= research.cost;
+    gameState.budget -= cost;
     gameState.research[researchKey] = true;
 
     // Unlock locations
@@ -682,7 +701,7 @@ function purchaseResearch(researchKey) {
 }
 
 function hireAstronaut() {
-    const cost = 50000;
+    const cost = Math.floor(50000 * getReputationMultiplier('astronaut'));
 
     if (gameState.budget < cost) {
         showNotification('Insufficient funds', 'error');
@@ -721,6 +740,9 @@ function getRocketCost(rocketKey) {
     if (gameState.research['reusableRockets'] && !rocket.reusable) {
         cost = Math.floor(cost * 0.5);
     }
+
+    // Apply reputation discount
+    cost = Math.floor(cost * getReputationMultiplier('rocket'));
 
     return cost;
 }
@@ -877,8 +899,8 @@ function updateActiveMissions() {
 }
 
 function completeMission(mission) {
-    // Success chance (95% base)
-    const success = Math.random() < 0.95;
+    // Success chance (95% base, can increase with reputation)
+    const success = Math.random() < getMissionSuccessRate();
 
     if (!success) {
         // Show explosion animation
@@ -1029,9 +1051,10 @@ function checkContracts(mission) {
 
             if (contract.progress >= contract.count) {
                 // Contract completed!
-                gameState.budget += contract.reward;
+                const reward = Math.floor(contract.reward * getReputationMultiplier('contract'));
+                gameState.budget += reward;
                 addReputation(contract.rep);
-                showNotification(`Contract completed! +${formatMoney(contract.reward)}`, 'success');
+                showNotification(`Contract completed! +${formatMoney(reward)}`, 'success');
                 gameState.contracts.splice(idx, 1);
 
                 // Generate new contract
@@ -1061,6 +1084,59 @@ function addReputation(amount) {
         gameState.budget += bonus;
         showNotification(`🏆 Reputation Milestone! Government funding: ${formatMoney(bonus)}`, 'success');
     }
+
+    // Check for reputation tier benefits
+    checkReputationBenefits(oldRep, gameState.reputation);
+}
+
+function checkReputationBenefits(oldRep, newRep) {
+    // Reputation unlocks special benefits at certain thresholds
+    const benefits = {
+        10: { msg: '🎖️ Reputation 10: Research costs -5%', type: 'researchDiscount', value: 0.05 },
+        25: { msg: '🎖️ Reputation 25: Astronaut hiring -20%', type: 'astronautDiscount', value: 0.20 },
+        50: { msg: '🎖️ Reputation 50: Mission success rate +2%', type: 'successBonus', value: 0.02 },
+        75: { msg: '🎖️ Reputation 75: Contract rewards +15%', type: 'contractBonus', value: 0.15 },
+        100: { msg: '🎖️ Reputation 100: All rockets -10%', type: 'rocketDiscount', value: 0.10 },
+        150: { msg: '🎖️ Reputation 150: Elite Status - All bonuses doubled!', type: 'elite', value: 2 }
+    };
+
+    Object.entries(benefits).forEach(([threshold, benefit]) => {
+        const thresh = parseInt(threshold);
+        if (oldRep < thresh && newRep >= thresh) {
+            showNotification(benefit.msg, 'success');
+        }
+    });
+}
+
+function getReputationMultiplier(type) {
+    const rep = gameState.reputation;
+    let multiplier = 1.0;
+
+    if (type === 'research' && rep >= 10) {
+        multiplier -= 0.05;
+        if (rep >= 150) multiplier -= 0.05; // Elite bonus
+    }
+    if (type === 'astronaut' && rep >= 25) {
+        multiplier -= 0.20;
+        if (rep >= 150) multiplier -= 0.20;
+    }
+    if (type === 'rocket' && rep >= 100) {
+        multiplier -= 0.10;
+        if (rep >= 150) multiplier -= 0.10;
+    }
+    if (type === 'contract' && rep >= 75) {
+        multiplier += 0.15;
+        if (rep >= 150) multiplier += 0.15;
+    }
+
+    return multiplier;
+}
+
+function getMissionSuccessRate() {
+    let rate = 0.95;
+    if (gameState.reputation >= 50) rate += 0.02;
+    if (gameState.reputation >= 150) rate += 0.02;
+    return Math.min(0.99, rate); // Cap at 99%
 }
 
 function formatMoney(amount) {
