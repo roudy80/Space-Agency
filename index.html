@@ -72,38 +72,45 @@
             <div id="missions-tab" class="tab-content">
                 <h2>LAUNCH FACILITY</h2>
 
-                <section class="panel">
-                    <h3>MISSION CONFIGURATION</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <section class="panel">
+                        <h3>MISSION CONFIGURATION</h3>
 
-                    <div class="mission-config">
-                        <label>DESTINATION:</label>
-                        <select id="destination-select"></select>
-                    </div>
+                        <div class="mission-config">
+                            <label>DESTINATION:</label>
+                            <select id="destination-select"></select>
+                        </div>
 
-                    <div class="mission-config">
-                        <label>PAYLOAD TYPE:</label>
-                        <select id="payload-select">
-                            <option value="probe">Probe (Unmanned)</option>
-                            <option value="crew">Crew Mission</option>
-                            <option value="base">Base Module</option>
-                        </select>
-                    </div>
+                        <div class="mission-config">
+                            <label>PAYLOAD TYPE:</label>
+                            <select id="payload-select">
+                                <option value="probe">Probe (Unmanned)</option>
+                                <option value="crew">Crew Mission</option>
+                                <option value="base">Base Module</option>
+                            </select>
+                        </div>
 
-                    <div class="mission-config">
-                        <label>ROCKET:</label>
-                        <select id="rocket-select"></select>
-                    </div>
+                        <div class="mission-config">
+                            <label>ROCKET:</label>
+                            <select id="rocket-select"></select>
+                        </div>
 
-                    <div class="mission-config">
-                        <label>CREW (if applicable):</label>
-                        <select id="crew-select">
-                            <option value="">None</option>
-                        </select>
-                    </div>
+                        <div class="mission-config">
+                            <label>CREW (if applicable):</label>
+                            <select id="crew-select">
+                                <option value="">None</option>
+                            </select>
+                        </div>
 
-                    <div id="mission-cost"></div>
-                    <button id="launch-btn" class="btn btn-primary">LAUNCH MISSION</button>
-                </section>
+                        <div id="mission-cost"></div>
+                        <button id="launch-btn" class="btn btn-primary">LAUNCH MISSION</button>
+                    </section>
+
+                    <section class="panel">
+                        <h3>MISSION PREVIEW</h3>
+                        <div id="mission-preview"></div>
+                    </section>
+                </div>
             </div>
 
             <!-- Locations Tab -->

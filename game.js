@@ -542,6 +542,83 @@ function updateMissionConfig() {
     `;
 
     document.getElementById('launch-btn').disabled = !canLaunch;
+
+    // Update mission preview art
+    updateMissionPreview(destination, payload, rocket);
+}
+
+function updateMissionPreview(destination, payload, rocket) {
+    const destData = DESTINATIONS[destination];
+    const rocketData = ROCKETS[rocket];
+
+    let art = '';
+    let description = '';
+
+    // Generate art based on payload and destination
+    if (payload === 'probe') {
+        art = `
+    ╔════════╗
+    ║ [::::] ║  ← Probe
+    ║  /||\\  ║
+    ╚════════╝
+        ||
+       /||\\
+      / || \\
+     /  ||  \\    ← ${rocketData.name}
+    |   ||   |
+    |   ||   |
+    |___/\\___|
+       (  )
+        \\/`;
+        description = `Unmanned probe mission to ${destData.name}. The probe will collect scientific data and transmit back to Earth.`;
+    } else if (payload === 'crew') {
+        art = `
+    ╔════════╗
+    ║  👨‍🚀👨‍🚀  ║  ← Crew Capsule
+    ║ [::::] ║
+    ╚════════╝
+        ||
+       /||\\
+      / || \\
+     /  ||  \\    ← ${rocketData.name}
+    |   ||   |
+    |   ||   |
+    |___/\\___|
+       (  )
+        \\/`;
+        description = `Crewed mission to ${destData.name}. Astronauts will conduct experiments and return safely.`;
+    } else if (payload === 'base') {
+        art = `
+    ╔══════════╗
+    ║ ▓▓▓▓▓▓▓▓ ║
+    ║ ▓ BASE ▓ ║  ← Habitat Module
+    ║ ▓▓▓▓▓▓▓▓ ║
+    ╚══════════╝
+         ||
+        /||\\
+       / || \\
+      /  ||  \\    ← ${rocketData.name}
+     |   ||   |
+     |   ||   |
+     |___/\\___|
+        (  )
+         \\/`;
+        description = `Base module delivery to ${destData.name}. Will establish permanent infrastructure for future missions.`;
+    }
+
+    // Add destination indicator
+    let destIcon = '';
+    if (destination === 'leo') destIcon = '🌍 ← Earth Orbit';
+    else if (destination === 'moon') destIcon = '🌙 ← Moon';
+    else if (destination === 'mars') destIcon = '🔴 ← Mars';
+    else if (destination === 'venus') destIcon = '🟡 ← Venus';
+    else if (destination === 'jupiter') destIcon = '🪐 ← Jupiter';
+
+    document.getElementById('mission-preview').innerHTML = `
+        <div style="font-size: 20px; margin-bottom: 10px;">${destIcon}</div>
+        <div class="mission-art">${art}</div>
+        <div class="mission-description">${description}</div>
+    `;
 }
 
 function updateLocations() {
@@ -696,7 +773,9 @@ function launchMission() {
     }
 
     showNotification(`🚀 Launched to ${destData.name}!`, 'success');
-    updateUI();
+
+    // Switch to dashboard to watch the mission
+    switchTab('dashboard');
 }
 
 function updateActiveMissions() {
@@ -716,6 +795,27 @@ function updateActiveMissions() {
     completed.forEach(mission => {
         completeMission(mission);
     });
+
+    // Update dashboard if visible and there are active missions
+    const activeTab = document.querySelector('.tab-content.active');
+    if (activeTab && activeTab.id === 'dashboard-tab' && gameState.activeMissions.length > 0) {
+        // Update just the active missions display without full UI refresh
+        const activeMissionsEl = document.getElementById('active-missions');
+        activeMissionsEl.innerHTML = gameState.activeMissions.map((mission, idx) => {
+            const progress = ((Date.now() - mission.startTime) / (mission.duration * 1000)) * 100;
+            const timeLeft = Math.max(0, mission.duration - Math.floor((Date.now() - mission.startTime) / 1000));
+            return `
+                <div class="mission-item">
+                    <h4>${mission.name}</h4>
+                    <div>Destination: ${mission.destination}</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${Math.min(100, progress)}%"></div>
+                    </div>
+                    <div class="time-left">Time remaining: ${timeLeft}s</div>
+                </div>
+            `;
+        }).join('');
+    }
 
     if (completed.length > 0) {
         updateUI();
@@ -766,7 +866,7 @@ function completeMission(mission) {
 
     // Reputation gain
     const repGain = mission.payload === 'base' ? 20 : mission.payload === 'crew' ? 10 : 5;
-    gameState.reputation += repGain;
+    addReputation(repGain);
 
     // Check contracts
     checkContracts(mission);
@@ -784,25 +884,46 @@ function generateContracts() {
 
     const contractTypes = [];
 
-    // LEO contracts always available
+    // LEO contracts - varied and more rewarding for early game
     contractTypes.push(
-        { type: 'leo-sat', title: 'Satellite Deployment', desc: 'Launch 3 probes to LEO', count: 3, dest: 'leo', payload: 'probe', reward: 300000, rep: 5 },
-        { type: 'leo-crew', title: 'ISS Crew Rotation', desc: 'Deliver crew to LEO', count: 1, dest: 'leo', payload: 'crew', reward: 200000, rep: 8, needsResearch: 'humanSpaceflight' }
+        { type: 'leo-sat-1', title: 'Commercial Satellite Launch', desc: 'Launch 1 communications satellite to LEO', count: 1, dest: 'leo', payload: 'probe', reward: 180000, rep: 3 },
+        { type: 'leo-sat-2', title: 'GPS Constellation Deployment', desc: 'Launch 2 navigation satellites to LEO', count: 2, dest: 'leo', payload: 'probe', reward: 330000, rep: 5 },
+        { type: 'leo-sat-3', title: 'Earth Observation Contract', desc: 'Deploy 3 remote sensing satellites', count: 3, dest: 'leo', payload: 'probe', reward: 480000, rep: 8 },
+        { type: 'leo-crew', title: 'ISS Crew Rotation', desc: 'Deliver astronauts to International Space Station', count: 1, dest: 'leo', payload: 'crew', reward: 250000, rep: 10, needsResearch: 'humanSpaceflight' },
+        { type: 'leo-station', title: 'Space Station Resupply', desc: 'Deliver supplies to LEO station', count: 2, dest: 'leo', payload: 'probe', reward: 350000, rep: 6 }
     );
 
     // Moon contracts
     if (gameState.research['moonMissions']) {
         contractTypes.push(
-            { type: 'moon-probe', title: 'Lunar Survey', desc: 'Send probe to Moon', count: 1, dest: 'moon', payload: 'probe', reward: 500000, rep: 10 },
-            { type: 'moon-crew', title: 'Lunar Expedition', desc: 'Land crew on Moon', count: 1, dest: 'moon', payload: 'crew', reward: 1500000, rep: 25, needsResearch: 'lunarLanding' }
+            { type: 'moon-probe', title: 'Lunar Reconnaissance Orbiter', desc: 'Send mapping probe to Moon orbit', count: 1, dest: 'moon', payload: 'probe', reward: 650000, rep: 12 },
+            { type: 'moon-probe-2', title: 'Lunar Surface Mission', desc: 'Land robotic probe on Moon surface', count: 1, dest: 'moon', payload: 'probe', reward: 800000, rep: 15 },
+            { type: 'moon-crew', title: 'Apollo-class Mission', desc: 'Land astronauts on lunar surface', count: 1, dest: 'moon', payload: 'crew', reward: 2000000, rep: 30, needsResearch: 'lunarLanding' },
+            { type: 'moon-base', title: 'Artemis Base Program', desc: 'Establish permanent lunar outpost', count: 1, dest: 'moon', payload: 'base', reward: 4000000, rep: 40, needsResearch: 'moonBase' }
         );
     }
 
     // Mars contracts
     if (gameState.research['marsMissions']) {
         contractTypes.push(
-            { type: 'mars-probe', title: 'Mars Reconnaissance', desc: 'Send probe to Mars', count: 1, dest: 'mars', payload: 'probe', reward: 1200000, rep: 20 },
-            { type: 'mars-base', title: 'Mars Colony', desc: 'Establish Mars base', count: 1, dest: 'mars', payload: 'base', reward: 5000000, rep: 50, needsResearch: 'marsBase' }
+            { type: 'mars-probe', title: 'Mars Reconnaissance Mission', desc: 'Send orbital surveyor to Mars', count: 1, dest: 'mars', payload: 'probe', reward: 1500000, rep: 25 },
+            { type: 'mars-probe-2', title: 'Mars Rover Program', desc: 'Land robotic rover on Mars', count: 1, dest: 'mars', payload: 'probe', reward: 2000000, rep: 30 },
+            { type: 'mars-crew', title: 'First Mars Landing', desc: 'Land crew on martian surface', count: 1, dest: 'mars', payload: 'crew', reward: 5000000, rep: 60, needsResearch: 'marsLanding' },
+            { type: 'mars-base', title: 'Mars Colony Initiative', desc: 'Establish permanent Mars settlement', count: 1, dest: 'mars', payload: 'base', reward: 10000000, rep: 80, needsResearch: 'marsBase' }
+        );
+    }
+
+    // Venus contracts
+    if (gameState.research['venusMissions']) {
+        contractTypes.push(
+            { type: 'venus-probe', title: 'Venus Atmospheric Probe', desc: 'Send probe to study Venus atmosphere', count: 1, dest: 'venus', payload: 'probe', reward: 1800000, rep: 28 }
+        );
+    }
+
+    // Jupiter contracts
+    if (gameState.research['jupiterMissions']) {
+        contractTypes.push(
+            { type: 'jupiter-probe', title: 'Jupiter System Explorer', desc: 'Send probe to Jupiter and its moons', count: 1, dest: 'jupiter', payload: 'probe', reward: 4000000, rep: 50 }
         );
     }
 
@@ -852,7 +973,7 @@ function checkContracts(mission) {
             if (contract.progress >= contract.count) {
                 // Contract completed!
                 gameState.budget += contract.reward;
-                gameState.reputation += contract.rep;
+                addReputation(contract.rep);
                 showNotification(`Contract completed! +${formatMoney(contract.reward)}`, 'success');
                 gameState.contracts.splice(idx, 1);
 
@@ -868,6 +989,22 @@ function checkContracts(mission) {
 // ========================================
 // UTILITY FUNCTIONS
 // ========================================
+
+function addReputation(amount) {
+    const oldRep = gameState.reputation;
+    gameState.reputation += amount;
+
+    // Check for milestone bonuses (every 25 reputation)
+    const oldMilestone = Math.floor(oldRep / 25);
+    const newMilestone = Math.floor(gameState.reputation / 25);
+
+    if (newMilestone > oldMilestone) {
+        const bonusCount = newMilestone - oldMilestone;
+        const bonus = bonusCount * 100000; // $100k per milestone
+        gameState.budget += bonus;
+        showNotification(`🏆 Reputation Milestone! Government funding: ${formatMoney(bonus)}`, 'success');
+    }
+}
 
 function formatMoney(amount) {
     return '$' + amount.toLocaleString();
