@@ -484,6 +484,66 @@ h3 {
     margin-top: 15px;
 }
 
+/* Launch Animation */
+#launch-animation {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 14, 39, 0.95);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    pointer-events: none;
+}
+
+#launch-rocket {
+    font-size: 64px;
+    position: absolute;
+    bottom: 50px;
+    animation: rocketLaunch 3s ease-in forwards;
+}
+
+@keyframes rocketLaunch {
+    0% {
+        bottom: 50px;
+        opacity: 1;
+        transform: scale(1);
+    }
+    80% {
+        bottom: 100%;
+        opacity: 1;
+        transform: scale(0.5);
+    }
+    100% {
+        bottom: 100%;
+        opacity: 0;
+        transform: scale(0.3);
+    }
+}
+
+#launch-rocket.explode {
+    animation: rocketExplode 1s ease-out forwards;
+}
+
+@keyframes rocketExplode {
+    0% {
+        bottom: 50%;
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(2);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(3);
+    }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     body {

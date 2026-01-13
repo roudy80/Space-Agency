@@ -35,24 +35,27 @@ const RESEARCH_TREE = {
     mediumRocket: {
         name: "Medium Rocket",
         category: "Rockets",
-        cost: 200000,
+        cost: 150000,
         description: "Unlock medium-lift rockets (5T to LEO)",
+        benefit: "• Medium Rocket available\n• Launch heavier payloads",
         unlocked: false,
         prerequisites: []
     },
     heavyRocket: {
         name: "Heavy Rocket",
         category: "Rockets",
-        cost: 800000,
+        cost: 400000,
         description: "Unlock heavy-lift rockets (20T to LEO)",
+        benefit: "• Heavy Rocket available\n• Launch bases to Moon/Mars",
         unlocked: false,
         prerequisites: ['mediumRocket']
     },
     superHeavyRocket: {
         name: "Super Heavy Rocket",
         category: "Rockets",
-        cost: 3000000,
+        cost: 1500000,
         description: "Unlock super heavy rockets (50T to LEO)",
+        benefit: "• Super Heavy Rocket available\n• Jupiter missions possible",
         unlocked: false,
         prerequisites: ['heavyRocket']
     },
@@ -61,16 +64,18 @@ const RESEARCH_TREE = {
     spaceplane: {
         name: "Space Plane",
         category: "Reusable",
-        cost: 5000000,
+        cost: 2500000,
         description: "Reusable spaceplane - pay once, reuse forever",
+        benefit: "• Space Plane unlocked\n• Only $50k fuel per launch\n• 3T capacity",
         unlocked: false,
         prerequisites: ['mediumRocket']
     },
     reusableRockets: {
         name: "Reusable Rockets",
         category: "Reusable",
-        cost: 2000000,
+        cost: 1000000,
         description: "Rockets can now land and be reused (50% cost savings)",
+        benefit: "• All rockets 50% cheaper\n• Massive cost savings",
         unlocked: false,
         prerequisites: ['heavyRocket']
     },
@@ -79,32 +84,36 @@ const RESEARCH_TREE = {
     moonMissions: {
         name: "Lunar Program",
         category: "Destinations",
-        cost: 500000,
+        cost: 250000,
         description: "Unlock Moon missions",
+        benefit: "• Moon destination unlocked\n• New lucrative contracts",
         unlocked: false,
         prerequisites: ['mediumRocket']
     },
     marsMissions: {
         name: "Mars Program",
         category: "Destinations",
-        cost: 2000000,
+        cost: 1000000,
         description: "Unlock Mars missions",
+        benefit: "• Mars destination unlocked\n• High-value contracts",
         unlocked: false,
         prerequisites: ['heavyRocket', 'moonMissions']
     },
     venusMissions: {
         name: "Venus Program",
         category: "Destinations",
-        cost: 1500000,
+        cost: 800000,
         description: "Unlock Venus missions",
+        benefit: "• Venus destination unlocked\n• Science contracts",
         unlocked: false,
         prerequisites: ['heavyRocket', 'moonMissions']
     },
     jupiterMissions: {
         name: "Jupiter Program",
         category: "Destinations",
-        cost: 5000000,
+        cost: 2500000,
         description: "Unlock Jupiter missions",
+        benefit: "• Jupiter unlocked\n• Massive rewards",
         unlocked: false,
         prerequisites: ['superHeavyRocket', 'marsMissions']
     },
@@ -113,24 +122,27 @@ const RESEARCH_TREE = {
     humanSpaceflight: {
         name: "Human Spaceflight",
         category: "Crew",
-        cost: 300000,
+        cost: 200000,
         description: "Enable crewed missions to LEO",
+        benefit: "• Crew missions to LEO\n• Higher contract rewards\n• More reputation",
         unlocked: false,
         prerequisites: []
     },
     lunarLanding: {
         name: "Lunar Landing",
         category: "Crew",
-        cost: 1000000,
+        cost: 600000,
         description: "Enable crew landings on Moon",
+        benefit: "• Land crew on Moon\n• Big reputation gains\n• $2M+ contracts",
         unlocked: false,
         prerequisites: ['humanSpaceflight', 'moonMissions']
     },
     marsLanding: {
         name: "Mars Landing",
         category: "Crew",
-        cost: 3000000,
+        cost: 1500000,
         description: "Enable crew landings on Mars",
+        benefit: "• Land crew on Mars\n• Huge reputation\n• $5M+ contracts",
         unlocked: false,
         prerequisites: ['lunarLanding', 'marsMissions']
     },
@@ -139,24 +151,27 @@ const RESEARCH_TREE = {
     spaceStation: {
         name: "Space Station",
         category: "Bases",
-        cost: 1500000,
+        cost: 800000,
         description: "Build permanent LEO station",
+        benefit: "• Deploy space station\n• Long-term presence\n• New missions",
         unlocked: false,
         prerequisites: ['humanSpaceflight', 'mediumRocket']
     },
     moonBase: {
         name: "Lunar Base",
         category: "Bases",
-        cost: 3000000,
+        cost: 1500000,
         description: "Build permanent Moon base",
+        benefit: "• Establish Moon base\n• Enable mining\n• $4M contracts",
         unlocked: false,
         prerequisites: ['lunarLanding']
     },
     marsBase: {
         name: "Mars Base",
         category: "Bases",
-        cost: 8000000,
+        cost: 3500000,
         description: "Build permanent Mars base",
+        benefit: "• Establish Mars base\n• Enable mining\n• $10M contracts",
         unlocked: false,
         prerequisites: ['marsLanding']
     },
@@ -165,16 +180,18 @@ const RESEARCH_TREE = {
     lunarMining: {
         name: "Lunar Mining",
         category: "Mining",
-        cost: 2000000,
+        cost: 1000000,
         description: "Extract resources from Moon base",
+        benefit: "• Passive income\n• $50k per mission\n• Returns on investment",
         unlocked: false,
         prerequisites: ['moonBase']
     },
     marsMining: {
         name: "Mars Mining",
         category: "Mining",
-        cost: 5000000,
+        cost: 2500000,
         description: "Extract resources from Mars base",
+        benefit: "• High passive income\n• $50k per mission\n• Fuel independence",
         unlocked: false,
         prerequisites: ['marsBase']
     }
@@ -303,7 +320,7 @@ function initResearchTree() {
 function updateUI() {
     // Update header
     document.getElementById('budget').textContent = formatMoney(gameState.budget);
-    document.getElementById('reputation').textContent = gameState.reputation;
+    document.getElementById('reputation').textContent = gameState.reputation + ' pts';
 
     // Update active tab content
     const activeTab = document.querySelector('.tab-content.active').id;
@@ -421,12 +438,13 @@ function updateResearchTree() {
             else if (available) cssClass += ' available';
 
             html += `
-                <div class="${cssClass}" onclick="${available ? `purchaseResearch('${item.key}')` : ''}">
+                <div class="${cssClass}" onclick="${available ? `confirmResearch('${item.key}')` : ''}">
                     <h4>${item.name}</h4>
                     <p style="color: #888; font-size: 12px; margin: 5px 0;">${item.description}</p>
+                    ${item.benefit ? `<p style="color: #6bbc6b; font-size: 11px; margin: 8px 0; white-space: pre-line;">${item.benefit}</p>` : ''}
                     <div class="cost">Cost: ${formatMoney(item.cost)}</div>
                     <div class="status">
-                        ${unlocked ? '✓ UNLOCKED' : locked ? '🔒 LOCKED' : '→ AVAILABLE'}
+                        ${unlocked ? '✓ UNLOCKED' : locked ? '🔒 LOCKED' : '→ CLICK TO RESEARCH'}
                     </div>
                 </div>
             `;
@@ -446,6 +464,7 @@ function updateAstronauts() {
 
     roster.innerHTML = gameState.astronauts.map(astronaut => `
         <div class="astronaut-card">
+            <div style="font-size: 32px; text-align: center; margin-bottom: 10px;">${astronaut.avatar || '👨‍🚀'}</div>
             <h4>${astronaut.name}</h4>
             <div class="stat-line">Missions: ${astronaut.missions}</div>
             <div class="stat-line">Time in Space: ${astronaut.timeInSpace}s</div>
@@ -551,72 +570,39 @@ function updateMissionPreview(destination, payload, rocket) {
     const destData = DESTINATIONS[destination];
     const rocketData = ROCKETS[rocket];
 
-    let art = '';
+    let payloadIcon = '';
     let description = '';
 
-    // Generate art based on payload and destination
+    // Generate art based on payload
     if (payload === 'probe') {
-        art = `
-    ╔════════╗
-    ║ [::::] ║  ← Probe
-    ║  /||\\  ║
-    ╚════════╝
-        ||
-       /||\\
-      / || \\
-     /  ||  \\    ← ${rocketData.name}
-    |   ||   |
-    |   ||   |
-    |___/\\___|
-       (  )
-        \\/`;
-        description = `Unmanned probe mission to ${destData.name}. The probe will collect scientific data and transmit back to Earth.`;
+        payloadIcon = '🛰️';
+        description = `Deploy satellite to ${destData.name}. Collect scientific data and transmit back to Earth.`;
     } else if (payload === 'crew') {
-        art = `
-    ╔════════╗
-    ║  👨‍🚀👨‍🚀  ║  ← Crew Capsule
-    ║ [::::] ║
-    ╚════════╝
-        ||
-       /||\\
-      / || \\
-     /  ||  \\    ← ${rocketData.name}
-    |   ||   |
-    |   ||   |
-    |___/\\___|
-       (  )
-        \\/`;
-        description = `Crewed mission to ${destData.name}. Astronauts will conduct experiments and return safely.`;
+        payloadIcon = '👨‍🚀';
+        description = `Send astronauts to ${destData.name}. Conduct experiments and return safely to Earth.`;
     } else if (payload === 'base') {
-        art = `
-    ╔══════════╗
-    ║ ▓▓▓▓▓▓▓▓ ║
-    ║ ▓ BASE ▓ ║  ← Habitat Module
-    ║ ▓▓▓▓▓▓▓▓ ║
-    ╚══════════╝
-         ||
-        /||\\
-       / || \\
-      /  ||  \\    ← ${rocketData.name}
-     |   ||   |
-     |   ||   |
-     |___/\\___|
-        (  )
-         \\/`;
-        description = `Base module delivery to ${destData.name}. Will establish permanent infrastructure for future missions.`;
+        payloadIcon = '🏠';
+        description = `Deliver habitat module to ${destData.name}. Establish permanent infrastructure for future missions.`;
     }
 
-    // Add destination indicator
+    // Destination icon
     let destIcon = '';
-    if (destination === 'leo') destIcon = '🌍 ← Earth Orbit';
-    else if (destination === 'moon') destIcon = '🌙 ← Moon';
-    else if (destination === 'mars') destIcon = '🔴 ← Mars';
-    else if (destination === 'venus') destIcon = '🟡 ← Venus';
-    else if (destination === 'jupiter') destIcon = '🪐 ← Jupiter';
+    if (destination === 'leo') destIcon = '🌍';
+    else if (destination === 'moon') destIcon = '🌙';
+    else if (destination === 'mars') destIcon = '🔴';
+    else if (destination === 'venus') destIcon = '🟡';
+    else if (destination === 'jupiter') destIcon = '🪐';
+
+    // Rocket icon based on type
+    let rocketIcon = '🚀';
+    if (rocket === 'spaceplane') rocketIcon = '✈️';
+    else if (rocket === 'heavy' || rocket === 'superHeavy') rocketIcon = '🚀';
 
     document.getElementById('mission-preview').innerHTML = `
-        <div style="font-size: 20px; margin-bottom: 10px;">${destIcon}</div>
-        <div class="mission-art">${art}</div>
+        <div style="font-size: 48px; margin-bottom: 20px;">${destIcon}</div>
+        <div style="font-size: 36px; margin: 20px 0;">${payloadIcon}</div>
+        <div style="font-size: 42px; margin-bottom: 20px;">${rocketIcon}</div>
+        <div style="color: #5ba3a3; font-size: 14px; font-weight: bold; margin-bottom: 5px;">${rocketData.name}</div>
         <div class="mission-description">${description}</div>
     `;
 }
@@ -661,6 +647,14 @@ function canResearch(researchKey) {
     return true;
 }
 
+function confirmResearch(researchKey) {
+    const research = RESEARCH_TREE[researchKey];
+
+    if (confirm(`Research ${research.name} for ${formatMoney(research.cost)}?\n\nThis will unlock:\n${research.benefit || research.description}`)) {
+        purchaseResearch(researchKey);
+    }
+}
+
 function purchaseResearch(researchKey) {
     const research = RESEARCH_TREE[researchKey];
 
@@ -699,8 +693,12 @@ function hireAstronaut() {
                    'Kelly', 'Logan', 'Morgan', 'Noel', 'Oakley', 'Parker', 'Quinn', 'Riley', 'Sage', 'Taylor'];
     const name = names[Math.floor(Math.random() * names.length)] + ' ' + String.fromCharCode(65 + Math.floor(Math.random() * 26)) + '.';
 
+    const avatars = ['👨‍🚀', '👩‍🚀', '🧑‍🚀'];
+    const avatar = avatars[Math.floor(Math.random() * avatars.length)];
+
     const astronaut = {
         name: name,
+        avatar: avatar,
         missions: 0,
         timeInSpace: 0,
         locationsVisited: [],
@@ -772,10 +770,66 @@ function launchMission() {
         gameState.astronauts[mission.crewIdx].available = false;
     }
 
+    // Show launch animation
+    showLaunchAnimation(rocket);
+
     showNotification(`🚀 Launched to ${destData.name}!`, 'success');
 
     // Switch to dashboard to watch the mission
     switchTab('dashboard');
+}
+
+function showLaunchAnimation(rocketType) {
+    const animationEl = document.getElementById('launch-animation');
+    const rocketEl = document.getElementById('launch-rocket');
+
+    // Set rocket icon based on type
+    if (rocketType === 'spaceplane') {
+        rocketEl.textContent = '✈️';
+    } else {
+        rocketEl.textContent = '🚀';
+    }
+
+    // Reset animation
+    rocketEl.classList.remove('explode');
+    rocketEl.style.animation = 'none';
+
+    // Show overlay
+    animationEl.style.display = 'flex';
+
+    // Trigger animation
+    setTimeout(() => {
+        rocketEl.style.animation = 'rocketLaunch 3s ease-in forwards';
+    }, 10);
+
+    // Hide after animation
+    setTimeout(() => {
+        animationEl.style.display = 'none';
+    }, 3000);
+}
+
+function showExplosionAnimation() {
+    const animationEl = document.getElementById('launch-animation');
+    const rocketEl = document.getElementById('launch-rocket');
+
+    // Change to explosion emoji
+    rocketEl.textContent = '💥';
+
+    // Reset and apply explosion animation
+    rocketEl.style.animation = 'none';
+
+    // Show overlay
+    animationEl.style.display = 'flex';
+
+    // Trigger explosion animation
+    setTimeout(() => {
+        rocketEl.style.animation = 'rocketExplode 1.5s ease-out forwards';
+    }, 10);
+
+    // Hide after animation
+    setTimeout(() => {
+        animationEl.style.display = 'none';
+    }, 1500);
 }
 
 function updateActiveMissions() {
@@ -827,6 +881,9 @@ function completeMission(mission) {
     const success = Math.random() < 0.95;
 
     if (!success) {
+        // Show explosion animation
+        showExplosionAnimation();
+
         showNotification(`❌ ${mission.name} failed!`, 'error');
         gameState.stats.totalLaunches++; // Already incremented, but keep for tracking
 
@@ -1062,4 +1119,5 @@ window.addEventListener('DOMContentLoaded', initGame);
 
 // Expose functions to window for onclick handlers
 window.purchaseResearch = purchaseResearch;
+window.confirmResearch = confirmResearch;
 window.acceptContract = acceptContract;
