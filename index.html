@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Agency Command</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Header -->
+        <header>
+            <h1>🚀 SPACE AGENCY COMMAND</h1>
+            <div id="header-stats">
+                <div class="stat">
+                    <span class="label">BUDGET:</span>
+                    <span id="budget" class="value">$1,000,000</span>
+                </div>
+                <div class="stat">
+                    <span class="label">REPUTATION:</span>
+                    <span id="reputation" class="value">0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav id="tab-nav">
+            <button class="tab-btn active" data-tab="dashboard">DASHBOARD</button>
+            <button class="tab-btn" data-tab="research">RESEARCH</button>
+            <button class="tab-btn" data-tab="astronauts">ASTRONAUTS</button>
+            <button class="tab-btn" data-tab="missions">MISSIONS</button>
+            <button class="tab-btn" data-tab="locations">LOCATIONS</button>
+        </nav>
+
+        <!-- Tab Content -->
+        <main id="content">
+            <!-- Dashboard Tab -->
+            <div id="dashboard-tab" class="tab-content active">
+                <h2>MISSION CONTROL</h2>
+
+                <section class="panel">
+                    <h3>ACTIVE CONTRACTS</h3>
+                    <div id="contracts-list"></div>
+                    <button id="refresh-contracts" class="btn">REFRESH CONTRACTS ($10,000)</button>
+                </section>
+
+                <section class="panel">
+                    <h3>ACTIVE MISSIONS</h3>
+                    <div id="active-missions"></div>
+                </section>
+
+                <section class="panel">
+                    <h3>QUICK STATS</h3>
+                    <div id="quick-stats"></div>
+                </section>
+            </div>
+
+            <!-- Research Tab -->
+            <div id="research-tab" class="tab-content">
+                <h2>RESEARCH & DEVELOPMENT</h2>
+                <div id="research-tree"></div>
+            </div>
+
+            <!-- Astronauts Tab -->
+            <div id="astronauts-tab" class="tab-content">
+                <h2>ASTRONAUT CORPS</h2>
+                <button id="hire-astronaut" class="btn">HIRE ASTRONAUT ($50,000)</button>
+                <div id="astronaut-roster"></div>
+            </div>
+
+            <!-- Missions Tab -->
+            <div id="missions-tab" class="tab-content">
+                <h2>LAUNCH FACILITY</h2>
+
+                <section class="panel">
+                    <h3>MISSION CONFIGURATION</h3>
+
+                    <div class="mission-config">
+                        <label>DESTINATION:</label>
+                        <select id="destination-select"></select>
+                    </div>
+
+                    <div class="mission-config">
+                        <label>PAYLOAD TYPE:</label>
+                        <select id="payload-select">
+                            <option value="probe">Probe (Unmanned)</option>
+                            <option value="crew">Crew Mission</option>
+                            <option value="base">Base Module</option>
+                        </select>
+                    </div>
+
+                    <div class="mission-config">
+                        <label>ROCKET:</label>
+                        <select id="rocket-select"></select>
+                    </div>
+
+                    <div class="mission-config">
+                        <label>CREW (if applicable):</label>
+                        <select id="crew-select">
+                            <option value="">None</option>
+                        </select>
+                    </div>
+
+                    <div id="mission-cost"></div>
+                    <button id="launch-btn" class="btn btn-primary">LAUNCH MISSION</button>
+                </section>
+            </div>
+
+            <!-- Locations Tab -->
+            <div id="locations-tab" class="tab-content">
+                <h2>SPACE LOCATIONS</h2>
+                <div id="locations-list"></div>
+            </div>
+        </main>
+
+        <!-- Notification Area -->
+        <div id="notifications"></div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
